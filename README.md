@@ -1,8 +1,8 @@
-# 🏪 Sistem Pencarian Lokasi Minimarket
+# Sistem Pencarian Lokasi Minimarket
 
 Sistem pencarian lokasi minimarket (Alfamart & Indomaret) berbasis web dengan evaluasi Information Retrieval menggunakan metrik MAP, Precision, dan Recall.
 
-## 🎯 Fitur Utama
+## Fitur Utama
 
 - **BM25 Ranking**: Algoritma ranking berbasis TF-IDF untuk kecocokan teks
 - **Haversine Distance**: Kalkulasi jarak geografis dari lokasi pengguna
@@ -11,7 +11,7 @@ Sistem pencarian lokasi minimarket (Alfamart & Indomaret) berbasis web dengan ev
 - **Visualisasi Peta**: Peta interaktif dengan marker lokasi
 - **Filter Store**: Filter berdasarkan tipe toko (Alfamart/Indomaret)
 
-## 📁 Struktur Project
+## Struktur Project
 
 ```
 project/
@@ -39,7 +39,7 @@ project/
     └── metrics_view.py     # Tampilan evaluasi
 ```
 
-## 🚀 Cara Menjalankan
+## Cara Menjalankan
 
 ### 1. Install Dependencies
 
@@ -60,7 +60,7 @@ Aplikasi akan otomatis terbuka di browser. Jika tidak, buka:
 http://localhost:8501
 ```
 
-## 📊 Metrik Evaluasi
+## Metrik Evaluasi
 
 ### Precision@K
 Mengukur ketepatan hasil:
@@ -83,7 +83,7 @@ AP = (1/|R|) × Σ P(k) × rel(k)
 ```
 *"Seberapa baik sistem menempatkan hasil relevan di posisi atas?"*
 
-## 🔧 Konfigurasi
+## Konfigurasi
 
 Edit `config.py` untuk menyesuaikan parameter:
 
@@ -104,34 +104,35 @@ WEIGHTS = {
 DEFAULT_K = 10
 ```
 
-## 📝 Ground Truth (Relevance Labeling)
+## Ground Truth (Relevance Labeling)
 
 Sistem menggunakan **rule-based relevance labeling**:
 
-- ✅ **Relevan jika:**
+- **Relevan jika:**
   - Skor BM25 > 0 (kecocokan teks)
   - Jarak < 10 km (jika lokasi aktif)
   - Tipe toko sesuai query
 
-- ❌ **Tidak relevan jika:**
+- **Tidak relevan jika:**
   - Tidak ada kecocokan teks
   - Jarak terlalu jauh
   - Tipe toko tidak sesuai
 
-## 📚 Justifikasi Akademik
+## Justifikasi Akademik
 
 Evaluasi ditampilkan di UI untuk memberikan:
 1. **Transparansi** kualitas sistem
 2. **Bukti objektif** bahwa hasil pencarian dapat diukur
 3. **Standar IR** (Information Retrieval) yang teruji
 
-## 🛠️ Teknologi
+## Teknologi
 
 - **Streamlit**: Web framework
 - **Pandas**: Data processing
 - **Folium**: Map visualization
 - **Python 3.8+**: Core language
 
-## 📄 Lisensi
+## Lisensi
 
 Proyek ini dibuat untuk keperluan akademik / UAS.
+
