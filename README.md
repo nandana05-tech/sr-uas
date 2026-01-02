@@ -1,4 +1,5 @@
-# Sistem Pencarian Lokasi Minimarket
+# Sistem Pencarian Lokasi Minimarket [![Streamlit App](https://img.shields.io/badge/Streamlit-Live-red?logo=streamlit)](https://nare-sr-uas.streamlit.app/)
+
 
 Sistem pencarian lokasi minimarket (Alfamart & Indomaret) berbasis web dengan evaluasi Information Retrieval menggunakan metrik MAP, Precision, dan Recall.
 
