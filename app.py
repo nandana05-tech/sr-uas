@@ -194,7 +194,7 @@ def main():
     st.markdown("""
     <div style="text-align: center; color: #888; font-size: 12px; padding: 1rem;">
         <p>Sistem Pencarian Lokasi Minimarket dengan Evaluasi IR</p>
-        <p>Menggunakan BM25 Ranking + Haversine Distance + MAP/Precision/Recall</p>
+        <p>Menggunakan BM25 Ranking + Haversine Distance + Precision/Recall/AP</p>
         <p>Data: Alfamart & Indomaret - Jakarta Selatan</p>
     </div>
     """, unsafe_allow_html=True)

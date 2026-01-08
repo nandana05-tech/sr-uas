@@ -189,11 +189,18 @@ class HeuristicRanker:
         mentions_alfamart = 'alfamart' in query_lower or 'alfa' in query_lower
         mentions_indomaret = 'indomaret' in query_lower or 'indo' in query_lower
         
+        # Calculate BM25 threshold (median) for more meaningful evaluation
+        bm25_scores = result_df['bm25_score'].tolist()
+        if bm25_scores:
+            bm25_threshold = np.median(bm25_scores)
+        else:
+            bm25_threshold = 0
+        
         for idx, row in result_df.iterrows():
             is_relevant = True
             
-            # Rule 1: Must have some BM25 relevance
-            if row.get('bm25_score', 0) <= 0:
+            # Rule 1: BM25 score must be above median (more strict than just > 0)
+            if row.get('bm25_score', 0) <= bm25_threshold:
                 is_relevant = False
             
             # Rule 2: Distance check (if available)

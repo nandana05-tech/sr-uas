@@ -205,7 +205,7 @@ def render_instructions():
         
         - **Precision@K**: Seberapa tepat hasil (dari K hasil, berapa yang relevan)
         - **Recall@K**: Seberapa lengkap hasil (dari semua yang relevan, berapa yang ditemukan)
-        - **MAP**: Kualitas keseluruhan ranking
+        - **Average Precision (AP)**: Kualitas keseluruhan ranking
         
         *Evaluasi menggunakan pseudo-relevance judgment berdasarkan:*
         - *Kecocokan teks dengan query*
