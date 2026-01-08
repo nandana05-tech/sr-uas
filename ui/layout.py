@@ -203,9 +203,9 @@ def render_instructions():
         
         ### Tentang Evaluasi
         
-        - **Precision@K**: Seberapa tepat hasil (dari K hasil, berapa yang relevan)
-        - **Recall@K**: Seberapa lengkap hasil (dari semua yang relevan, berapa yang ditemukan)
-        - **Average Precision (AP)**: Kualitas keseluruhan ranking
+        - **Precision@K**: Kemampuan mengidentifikasi hanya objek relevan (% prediksi positif yang benar)
+        - **Recall@K**: Kemampuan menemukan semua kasus relevan (% ground-truth yang berhasil ditemukan)
+        - **Average Precision (AP)**: Area di bawah kurva Precision × Recall
         
         *Evaluasi menggunakan pseudo-relevance judgment berdasarkan:*
         - *Kecocokan teks dengan query*

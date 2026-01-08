@@ -70,7 +70,7 @@ def render_metrics(metrics: Dict[str, float], k: int = 10):
         render_metric_card(
             f"Precision@{k}",
             f"{precision_val:.1%}",
-            "Ketepatan hasil",
+            "Persentase prediksi positif yang benar",
             "#28a745"
         )
     
@@ -79,7 +79,7 @@ def render_metrics(metrics: Dict[str, float], k: int = 10):
         render_metric_card(
             f"Recall@{k}",
             f"{recall_val:.1%}",
-            "Kelengkapan hasil",
+            "Kemampuan menemukan semua kasus relevan",
             "#17a2b8"
         )
     
@@ -88,7 +88,7 @@ def render_metrics(metrics: Dict[str, float], k: int = 10):
         render_metric_card(
             "Average Precision",
             f"{ap_val:.1%}",
-            "Kualitas ranking",
+            "Area di bawah kurva Precision × Recall",
             "#6f42c1"
         )
     
@@ -133,29 +133,33 @@ def render_metrics_explanation():
         ### Metrik Information Retrieval
         
         #### Precision@K
-        Mengukur **ketepatan** hasil pencarian.
+        Kemampuan model untuk mengidentifikasi **hanya objek yang relevan** 
+        (persentase prediksi positif yang benar).
         
         $$Precision@K = \\frac{\\text{Jumlah hasil relevan di top-K}}{K}$$
         
-        *"Dari K hasil teratas, berapa persen yang benar-benar relevan?"*
+        *"Dari K prediksi yang diberikan, berapa persen yang benar-benar relevan?"*
         
         ---
         
         #### Recall@K
-        Mengukur **kelengkapan** hasil pencarian.
+        Kemampuan model untuk **menemukan semua kasus yang relevan** 
+        (semua ground-truth). Ini adalah persentase prediksi positif yang benar 
+        di antara semua ground-truth yang diberikan.
         
-        $$Recall@K = \\frac{\\text{Jumlah hasil relevan di top-K}}{\\text{Total hasil relevan}}$$
+        $$Recall@K = \\frac{\\text{Jumlah hasil relevan di top-K}}{\\text{Total ground-truth relevan}}$$
         
-        *"Dari semua lokasi relevan, berapa persen yang berhasil ditemukan?"*
+        *"Dari semua lokasi yang seharusnya ditemukan, berapa persen yang berhasil diidentifikasi?"*
         
         ---
         
         #### Average Precision (AP)
-        Mengukur **kualitas ranking** secara keseluruhan.
+        Metrik berdasarkan **area di bawah kurva Precision × Recall** yang telah 
+        diproses untuk menghilangkan perilaku zig-zag.
         
         $$AP = \\frac{1}{|R|} \\sum_{k=1}^{n} P(k) \\times rel(k)$$
         
-        *"Seberapa baik sistem menempatkan hasil relevan di posisi atas?"*
+        *"Seberapa baik sistem menempatkan hasil relevan di posisi atas dalam ranking?"*
         
         ---
         
@@ -165,16 +169,16 @@ def render_metrics_explanation():
         **rule-based relevance labeling**:
         
         - **Relevan jika:**
-            - Skor BM25 > 0 (ada kecocokan teks)
+            - Skor BM25 > median (ada kecocokan teks yang signifikan)
             - Jarak < 10 km (jika lokasi diaktifkan)
             - Tipe toko sesuai query (jika disebutkan)
         
         - **Tidak relevan jika:**
-            - Tidak ada kecocokan teks sama sekali
+            - Skor BM25 di bawah threshold
             - Jarak terlalu jauh dari lokasi referensi
             - Tipe toko tidak sesuai yang dicari
         
-        *Pendekatan ini sah secara akademik sebagai **pseudo-relevance judgment**.*
+        *Pendekatan ini sah secara akademis sebagai **pseudo-relevance judgment**.*
         """)
 
 
@@ -192,16 +196,16 @@ def render_metrics_bar(metrics: Dict[str, float], k: int = 10):
     precision_val = metrics.get('precision_k', 0)
     st.markdown(f"**Precision@{k}**")
     st.progress(precision_val)
-    st.caption(f"{precision_val:.1%} - Ketepatan hasil pencarian")
+    st.caption(f"{precision_val:.1%} - Persentase prediksi positif yang benar")
     
     # Recall
     recall_val = metrics.get('recall_k', 0)
     st.markdown(f"**Recall@{k}**")
     st.progress(recall_val)
-    st.caption(f"{recall_val:.1%} - Kelengkapan hasil pencarian")
+    st.caption(f"{recall_val:.1%} - Kemampuan menemukan semua kasus relevan")
     
     # Average Precision
     ap_val = metrics.get('average_precision', 0)
     st.markdown("**Average Precision**")
     st.progress(ap_val)
-    st.caption(f"{ap_val:.1%} - Kualitas ranking keseluruhan")
+    st.caption(f"{ap_val:.1%} - Area di bawah kurva Precision × Recall")

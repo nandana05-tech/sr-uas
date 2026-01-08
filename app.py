@@ -138,30 +138,6 @@ def main():
             
             # 3. Result Table
             render_result_table(results, relevance=relevance)
-            
-            # Download results
-            st.markdown("---")
-            st.markdown("### Download Hasil")
-            
-            # Prepare download data
-            download_cols = [
-                'rank', 'nama_tempat', 'store', 'rating_tempat',
-                'user_ratings_total', 'alamat_tempat', 'nama_kelurahan',
-                'nama_kecamatan', 'latitude', 'longitude'
-            ]
-            
-            if 'distance_km' in results.columns:
-                download_cols.insert(5, 'distance_km')
-            
-            download_df = results[[c for c in download_cols if c in results.columns]]
-            
-            csv = download_df.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name=f"hasil_pencarian_{query.replace(' ', '_')}.csv",
-                mime="text/csv"
-            )
     
     elif search_clicked and not query:
         st.warning("Silakan masukkan query pencarian terlebih dahulu.")

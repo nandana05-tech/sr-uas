@@ -39,7 +39,8 @@ class Evaluator:
         
         Precision@K = |Relevant items in top-K| / K
         
-        "Dari K hasil teratas, berapa persen yang relevan?"
+        Kemampuan model untuk mengidentifikasi hanya objek yang relevan
+        (persentase prediksi positif yang benar).
         
         Args:
             relevance: List of boolean (True = relevant)
@@ -68,7 +69,9 @@ class Evaluator:
         
         Recall@K = |Relevant items in top-K| / |Total relevant items|
         
-        "Dari semua item relevan, berapa persen yang berhasil masuk top-K?"
+        Kemampuan model untuk menemukan semua kasus yang relevan
+        (semua ground-truth). Ini adalah persentase prediksi positif yang benar
+        di antara semua ground-truth yang diberikan.
         
         Args:
             relevance: List of boolean for ALL items (True = relevant)
@@ -101,8 +104,8 @@ class Evaluator:
         
         AP = (1/|R|) * Σ(P@k * rel(k))
         
-        Mengukur kualitas ranking secara keseluruhan dengan 
-        mempertimbangkan posisi hasil yang relevan.
+        Metrik berdasarkan area di bawah kurva Precision × Recall
+        yang telah diproses untuk menghilangkan perilaku zig-zag.
         
         Args:
             relevance: List of boolean (True = relevant)
@@ -200,16 +203,16 @@ class Evaluator:
         """
         return {
             'Precision@K': (
-                "Mengukur ketepatan hasil: "
-                "Dari K hasil teratas, berapa persen yang benar-benar relevan?"
+                "Kemampuan model untuk mengidentifikasi hanya objek yang relevan "
+                "(persentase prediksi positif yang benar)."
             ),
             'Recall@K': (
-                "Mengukur kelengkapan hasil: "
-                "Dari semua lokasi relevan, berapa persen yang berhasil ditemukan di top-K?"
+                "Kemampuan model untuk menemukan semua kasus yang relevan "
+                "(persentase ground-truth yang berhasil ditemukan di top-K)."
             ),
             'Average Precision': (
-                "Mengukur kualitas ranking keseluruhan: "
-                "Mempertimbangkan posisi setiap item relevan dalam hasil."
+                "Metrik berdasarkan area di bawah kurva Precision × Recall "
+                "yang telah diproses untuk menghilangkan perilaku zig-zag."
             ),
             'MAP': (
                 "Mean Average Precision: "
