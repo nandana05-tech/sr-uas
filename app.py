@@ -94,20 +94,30 @@ def main():
     
     st.markdown("---")
     
-    # Perform search if query provided
-    if search_clicked and query:
+    # Check if any input is provided (query, store filter, or location)
+    has_query = query and query.strip()
+    has_store_filter = store_filter and store_filter != 'Semua'
+    has_location = user_lat is not None and user_lon is not None
+    has_any_input = has_query or has_store_filter or has_location
+    
+    # Perform search if any input provided
+    if search_clicked and has_any_input:
         with st.spinner("Mencari lokasi minimarket..."):
             # Initialize ranker
             ranker = HeuristicRanker()
             ranker.fit(df)
             
+            # Use empty query if no text query provided
+            search_query = query.strip() if has_query else ""
+            
             # Perform ranking
             results = ranker.rank(
-                query=query,
+                query=search_query,
                 user_lat=user_lat,
                 user_lon=user_lon,
                 store_filter=store_filter,
-                top_k=50
+                top_k=50,
+                require_text_match=has_query  # Only require BM25 match if query provided
             )
         
         if len(results) == 0:
@@ -115,7 +125,7 @@ def main():
         else:
             # Determine relevance
             relevance = ranker.determine_relevance(
-                results, query, user_lat, user_lon
+                results, search_query, user_lat, user_lon
             )
             
             # Calculate evaluation metrics
@@ -139,8 +149,8 @@ def main():
             # 3. Result Table
             render_result_table(results, relevance=relevance)
     
-    elif search_clicked and not query:
-        st.warning("Silakan masukkan query pencarian terlebih dahulu.")
+    elif search_clicked and not has_any_input:
+        st.warning("Silakan masukkan minimal satu input: query pencarian, filter toko, atau aktifkan lokasi referensi.")
     
     else:
         # Show sample data

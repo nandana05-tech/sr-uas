@@ -75,9 +75,9 @@ class BM25Engine:
             
             # Hitung berapa dokumen yang mengandung kata tertentu
             for term in set(doc):  # set() agar dihitung sekali per dokumen
-                self.doc_freqs[term] = self.doc_freqs.get(term, 0) + 1 # ← df dihitung 
+                self.doc_freqs[term] = self.doc_freqs.get(term, 0) + 1 # ← df (document frequency) dihitung 
         
-        # Hitung nilai IDF untuk setiap kata
+        # Hitung nilai IDF (inverse document frequency) untuk setiap kata
         self._calculate_idf()
     
     def _calculate_idf(self):

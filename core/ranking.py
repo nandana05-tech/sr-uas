@@ -74,7 +74,7 @@ class HeuristicRanker:
         return [(s - min_score) / (max_score - min_score) for s in scores]
     
     def rank(self, query: str, user_lat: float = None, user_lon: float = None,
-             store_filter: str = None, top_k: int = 50) -> pd.DataFrame:
+             store_filter: str = None, top_k: int = 50, require_text_match: bool = True) -> pd.DataFrame:
         """
         Melakukan ranking berdasarkan query dan lokasi user.
         
@@ -84,6 +84,7 @@ class HeuristicRanker:
             user_lon: Longitude user (optional)
             store_filter: Filter tipe store (Alfamart/Indomaret)
             top_k: Jumlah hasil maksimum
+            require_text_match: Jika True, hanya tampilkan hasil dengan BM25 > 0
             
         Returns:
             DataFrame hasil ranking dengan skor
@@ -144,8 +145,9 @@ class HeuristicRanker:
         if store_filter and store_filter != 'Semua':
             result_df = result_df[result_df['store'] == store_filter]
         
-        # Filter by BM25 > 0 (must have some text relevance)
-        result_df = result_df[result_df['bm25_score'] > 0]
+        # Filter by BM25 > 0 only if text match is required
+        if require_text_match:
+            result_df = result_df[result_df['bm25_score'] > 0]
         
         # Sort by final score
         result_df = result_df.sort_values('final_score', ascending=False)
@@ -165,7 +167,7 @@ class HeuristicRanker:
         Menentukan ground truth relevance berdasarkan heuristic rules.
         
         Rules for relevance:
-        1. BM25 score > threshold (textual relevance)
+        1. BM25 score > threshold (textual relevance) - only if query provided
         2. Distance < max_distance (jika lokasi tersedia)
         3. Store type match (jika query menyebutkan)
         
@@ -182,7 +184,8 @@ class HeuristicRanker:
         if max_distance is None:
             max_distance = MAX_DISTANCE_KM
         
-        query_lower = query.lower()
+        query_lower = query.lower() if query else ""
+        has_query = bool(query and query.strip())
         relevance = []
         
         # Determine if query mentions specific store
@@ -191,7 +194,7 @@ class HeuristicRanker:
         
         # Calculate BM25 threshold (median) for more meaningful evaluation
         bm25_scores = result_df['bm25_score'].tolist()
-        if bm25_scores:
+        if bm25_scores and has_query:
             bm25_threshold = np.median(bm25_scores)
         else:
             bm25_threshold = 0
@@ -199,8 +202,8 @@ class HeuristicRanker:
         for idx, row in result_df.iterrows():
             is_relevant = True
             
-            # Rule 1: BM25 score must be above median (more strict than just > 0)
-            if row.get('bm25_score', 0) <= bm25_threshold:
+            # Rule 1: BM25 score must be above median (only if query provided)
+            if has_query and row.get('bm25_score', 0) <= bm25_threshold:
                 is_relevant = False
             
             # Rule 2: Distance check (if available)
