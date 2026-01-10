@@ -168,15 +168,19 @@ def render_metrics_explanation():
         Karena dataset tidak memiliki label relevansi bawaan, sistem menggunakan 
         **rule-based relevance labeling**:
         
+        #### Pencarian dengan Query Teks:
         - **Relevan jika:**
             - Skor BM25 > median (ada kecocokan teks yang signifikan)
             - Jarak < 10 km (jika lokasi diaktifkan)
             - Tipe toko sesuai query (jika disebutkan)
         
-        - **Tidak relevan jika:**
-            - Skor BM25 di bawah threshold
-            - Jarak terlalu jauh dari lokasi referensi
-            - Tipe toko tidak sesuai yang dicari
+        #### Pencarian Tanpa Query (Filter/Lokasi saja):
+        - **Relevan jika memenuhi minimal 2 dari 3 kriteria:**
+            - Berada di top 25% berdasarkan skor akhir
+            - Rating tempat >= 4.0
+            - Popularitas (jumlah review) di atas median
+        - **Kriteria tambahan jika lokasi aktif:**
+            - Jarak <= 5 km dari lokasi referensi
         
         *Pendekatan ini sah secara akademis sebagai **pseudo-relevance judgment**.*
         """)

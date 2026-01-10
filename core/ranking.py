@@ -202,15 +202,23 @@ class HeuristicRanker:
         else:
             bm25_threshold = 0
         
-        # For non-query searches, use final_score threshold (top 50%)
+        # For non-query searches, use stricter thresholds
         final_scores = result_df['final_score'].tolist()
         if final_scores:
-            final_score_threshold = np.median(final_scores)
+            # Use 75th percentile (top 25%) for stricter relevance
+            final_score_threshold = np.percentile(final_scores, 75)
         else:
             final_score_threshold = 0
         
-        # Minimum rating for quality results
-        min_rating = 3.5
+        # Get popularity threshold (median user_ratings_total)
+        popularity_values = result_df['user_ratings_total'].fillna(0).tolist()
+        if popularity_values:
+            popularity_threshold = np.median(popularity_values)
+        else:
+            popularity_threshold = 0
+        
+        # Stricter minimum rating for quality results
+        min_rating = 4.0
         
         for idx, row in result_df.iterrows():
             is_relevant = True
@@ -221,18 +229,31 @@ class HeuristicRanker:
                 if row.get('bm25_score', 0) <= bm25_threshold:
                     is_relevant = False
             else:
-                # Without query: use alternative criteria
-                # Rule 1a: Must be in top 50% by final_score
-                if row.get('final_score', 0) < final_score_threshold:
-                    is_relevant = False
+                # Without query: use stricter alternative criteria
+                relevance_score = 0
+                max_score = 3
                 
-                # Rule 1b: Must have decent rating (>= 3.5)
-                if row.get('rating_tempat', 0) < min_rating:
+                # Criterion 1: Must be in top 25% by final_score
+                if row.get('final_score', 0) >= final_score_threshold:
+                    relevance_score += 1
+                
+                # Criterion 2: Must have good rating (>= 4.0)
+                if row.get('rating_tempat', 0) >= min_rating:
+                    relevance_score += 1
+                
+                # Criterion 3: Must have above-median popularity
+                if row.get('user_ratings_total', 0) >= popularity_threshold:
+                    relevance_score += 1
+                
+                # Need at least 2 out of 3 criteria to be relevant
+                if relevance_score < 2:
                     is_relevant = False
             
             # Rule 2: Distance check (if location available)
             if has_location:
-                if row.get('distance_km', float('inf')) > max_distance:
+                # Use stricter distance for location-based search
+                strict_max_distance = max_distance * 0.5  # Half the max distance
+                if row.get('distance_km', float('inf')) > strict_max_distance:
                     is_relevant = False
             
             # Rule 3: Store type match (from query)
