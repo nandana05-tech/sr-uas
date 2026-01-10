@@ -170,6 +170,8 @@ class HeuristicRanker:
         1. BM25 score > threshold (textual relevance) - only if query provided
         2. Distance < max_distance (jika lokasi tersedia)
         3. Store type match (jika query menyebutkan)
+        4. Rating minimum (untuk filter/location-only search)
+        5. Top percentile berdasarkan final_score (untuk filter/location-only search)
         
         Args:
             result_df: DataFrame hasil ranking
@@ -186,32 +188,54 @@ class HeuristicRanker:
         
         query_lower = query.lower() if query else ""
         has_query = bool(query and query.strip())
+        has_location = user_lat is not None and user_lon is not None
         relevance = []
         
         # Determine if query mentions specific store
         mentions_alfamart = 'alfamart' in query_lower or 'alfa' in query_lower
         mentions_indomaret = 'indomaret' in query_lower or 'indo' in query_lower
         
-        # Calculate BM25 threshold (median) for more meaningful evaluation
+        # Calculate thresholds for relevance determination
         bm25_scores = result_df['bm25_score'].tolist()
         if bm25_scores and has_query:
             bm25_threshold = np.median(bm25_scores)
         else:
             bm25_threshold = 0
         
+        # For non-query searches, use final_score threshold (top 50%)
+        final_scores = result_df['final_score'].tolist()
+        if final_scores:
+            final_score_threshold = np.median(final_scores)
+        else:
+            final_score_threshold = 0
+        
+        # Minimum rating for quality results
+        min_rating = 3.5
+        
         for idx, row in result_df.iterrows():
             is_relevant = True
             
-            # Rule 1: BM25 score must be above median (only if query provided)
-            if has_query and row.get('bm25_score', 0) <= bm25_threshold:
-                is_relevant = False
+            if has_query:
+                # With query: use BM25-based relevance
+                # Rule 1: BM25 score must be above median
+                if row.get('bm25_score', 0) <= bm25_threshold:
+                    is_relevant = False
+            else:
+                # Without query: use alternative criteria
+                # Rule 1a: Must be in top 50% by final_score
+                if row.get('final_score', 0) < final_score_threshold:
+                    is_relevant = False
+                
+                # Rule 1b: Must have decent rating (>= 3.5)
+                if row.get('rating_tempat', 0) < min_rating:
+                    is_relevant = False
             
-            # Rule 2: Distance check (if available)
-            if user_lat is not None and user_lon is not None:
+            # Rule 2: Distance check (if location available)
+            if has_location:
                 if row.get('distance_km', float('inf')) > max_distance:
                     is_relevant = False
             
-            # Rule 3: Store type match
+            # Rule 3: Store type match (from query)
             store_type = str(row.get('store', '')).lower()
             if mentions_alfamart and 'alfamart' not in store_type:
                 is_relevant = False
