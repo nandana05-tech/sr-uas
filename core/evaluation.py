@@ -6,6 +6,7 @@ Modul evaluasi untuk menghitung Precision, Recall, dan MAP.
 from typing import List, Dict
 import sys
 import os
+import numpy as np
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -264,7 +265,6 @@ class ComponentEvaluator:
                 'bm25_recall': 0.0
             }
         
-        import numpy as np
         scores = np.array(bm25_scores)
         nonzero_scores = scores[scores > 0]
         
@@ -325,7 +325,6 @@ class ComponentEvaluator:
                 'spatial_efficiency': 0.0
             }
         
-        import numpy as np
         from .geo_utils import get_distance_statistics
         
         # Get distance statistics
