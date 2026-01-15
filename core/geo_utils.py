@@ -147,3 +147,82 @@ def format_distance(distance_km: float) -> str:
         return f"{distance_km * 1000:.0f} m"
     else:
         return f"{distance_km:.2f} km"
+
+
+def get_distance_statistics(distances: list, thresholds: list = None) -> dict:
+    """
+    Menghitung statistik jarak untuk evaluasi komponen Haversine.
+    
+    Args:
+        distances: List of distances in km
+        thresholds: List of distance thresholds to check coverage (default: [1, 2, 5, 10])
+        
+    Returns:
+        Dictionary dengan statistik jarak
+    """
+    if thresholds is None:
+        thresholds = [1, 2, 5, 10]
+    
+    if not distances:
+        return {
+            'count': 0,
+            'min_distance': 0,
+            'max_distance': 0,
+            'avg_distance': 0,
+            'median_distance': 0,
+            'coverage': {},
+            'distance_precision': 0.0,
+            'spatial_efficiency': 0.0
+        }
+    
+    # Filter out invalid distances
+    valid_distances = [d for d in distances if d is not None and d >= 0]
+    
+    if not valid_distances:
+        return {
+            'count': 0,
+            'min_distance': 0,
+            'max_distance': 0,
+            'avg_distance': 0,
+            'median_distance': 0,
+            'coverage': {},
+            'distance_precision': 0.0,
+            'spatial_efficiency': 0.0
+        }
+    
+    sorted_distances = sorted(valid_distances)
+    n = len(sorted_distances)
+    
+    # Calculate basic stats
+    min_dist = sorted_distances[0]
+    max_dist = sorted_distances[-1]
+    avg_dist = sum(sorted_distances) / n
+    median_dist = sorted_distances[n // 2] if n % 2 == 1 else (sorted_distances[n//2 - 1] + sorted_distances[n//2]) / 2
+    
+    # Calculate coverage at different thresholds
+    coverage = {}
+    for threshold in thresholds:
+        count_within = sum(1 for d in valid_distances if d <= threshold)
+        coverage[f'within_{threshold}km'] = count_within
+        coverage[f'within_{threshold}km_pct'] = count_within / n if n > 0 else 0.0
+    
+    # Distance Precision: percentage within MAX_DISTANCE_KM (default 10km)
+    distance_precision = coverage.get('within_10km_pct', 0.0)
+    
+    # Spatial Efficiency: inverse of normalized distance spread
+    # Higher value = results are more tightly clustered
+    if max_dist > 0:
+        spatial_efficiency = 1.0 - (avg_dist / max_dist)
+    else:
+        spatial_efficiency = 1.0
+    
+    return {
+        'count': n,
+        'min_distance': round(min_dist, 2),
+        'max_distance': round(max_dist, 2),
+        'avg_distance': round(avg_dist, 2),
+        'median_distance': round(median_dist, 2),
+        'coverage': coverage,
+        'distance_precision': round(distance_precision, 4),
+        'spatial_efficiency': round(spatial_efficiency, 4)
+    }

@@ -157,3 +157,56 @@ class BM25Engine:
         Mengembalikan skor BM25 untuk semua dokumen.
         """
         return [self.score(query, idx) for idx in range(self.N)]
+    
+    def get_statistics(self) -> dict:
+        """
+        Mengembalikan statistik corpus untuk evaluasi.
+        
+        Returns:
+            Dictionary dengan statistik corpus
+        """
+        return {
+            'num_documents': self.N,
+            'avg_doc_length': self.avgdl,
+            'vocabulary_size': len(self.doc_freqs),
+            'min_doc_length': min(self.doc_lengths) if self.doc_lengths else 0,
+            'max_doc_length': max(self.doc_lengths) if self.doc_lengths else 0,
+            'k1': self.k1,
+            'b': self.b
+        }
+    
+    def get_query_match_stats(self, query: list) -> dict:
+        """
+        Mengembalikan statistik kecocokan query dengan corpus.
+        
+        Args:
+            query: List of query tokens
+            
+        Returns:
+            Dictionary dengan statistik kecocokan
+        """
+        if not query:
+            return {
+                'query_terms': 0,
+                'matched_terms': 0,
+                'term_match_rate': 0.0,
+                'matched_term_list': [],
+                'unmatched_term_list': []
+            }
+        
+        matched_terms = [t for t in query if t in self.doc_freqs]
+        unmatched_terms = [t for t in query if t not in self.doc_freqs]
+        
+        # Calculate average IDF for matched terms
+        avg_idf = 0.0
+        if matched_terms:
+            avg_idf = sum(self.idf.get(t, 0) for t in matched_terms) / len(matched_terms)
+        
+        return {
+            'query_terms': len(query),
+            'matched_terms': len(matched_terms),
+            'term_match_rate': len(matched_terms) / len(query) if query else 0.0,
+            'matched_term_list': matched_terms,
+            'unmatched_term_list': unmatched_terms,
+            'avg_idf': avg_idf
+        }

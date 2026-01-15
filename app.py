@@ -21,13 +21,14 @@ st.set_page_config(
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import modules
-from config import DATA_FILE, DEFAULT_K
+from config import DATA_FILE, DEFAULT_K, WEIGHTS
 from core.ranking import HeuristicRanker
-from core.evaluation import Evaluator
+from core.evaluation import Evaluator, ComponentEvaluator
+from core.preprocessing import preprocess_query
 from ui.layout import render_main_layout, render_search_input, render_no_results, render_instructions
 from ui.result_table import render_result_table
 from ui.map_view import render_map
-from ui.metrics_view import render_metrics, render_metrics_explanation
+from ui.metrics_view import render_metrics, render_metrics_explanation, render_component_evaluation
 
 
 @st.cache_data
@@ -137,6 +138,21 @@ def main():
             # 1. Evaluation Summary
             render_metrics(metrics, k=min(DEFAULT_K, len(results)))
             render_metrics_explanation()
+            
+            # 2. Component Evaluation (BM25 & Haversine)
+            component_evaluator = ComponentEvaluator(k=DEFAULT_K)
+            query_tokens = preprocess_query(search_query) if has_query else []
+            component_metrics = component_evaluator.evaluate_components(
+                results, 
+                query_tokens=query_tokens,
+                bm25_engine=ranker.bm25
+            )
+            render_component_evaluation(
+                bm25_metrics=component_metrics['bm25'],
+                distance_metrics=component_metrics['distance'],
+                weights=WEIGHTS,
+                has_location=has_location
+            )
             
             st.markdown("---")
             
