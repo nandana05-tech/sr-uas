@@ -353,6 +353,38 @@ class Evaluator:
 | `MAX_DISTANCE_KM` | 10 | Jarak maksimum relevan |
 | `DEFAULT_K` | 10 | Default K untuk evaluasi |
 
+#### 3.5.4 Evaluasi Komponen (BM25 dan Haversine)
+
+Sistem menyediakan evaluasi terpisah untuk setiap komponen ranking:
+
+**Metrik BM25 (Text Relevance):**
+
+| Metrik | Interpretasi |
+|--------|-------------|
+| Corpus Match Rate | Persentase dokumen di corpus yang cocok dengan query |
+| Avg BM25 Score | Semakin tinggi = kecocokan lebih kuat |
+| Score Range | Rentang skor (Max - Min). Rentang lebar = ada variasi kualitas hasil |
+| Score Std Dev | Standar deviasi skor. Semakin tinggi = ranking lebih diskriminatif |
+| BM25 Precision@K | Hasil di top-K yang di atas median |
+
+**Metrik Haversine (Distance):**
+
+| Metrik | Interpretasi |
+|--------|-------------|
+| Rata-rata Jarak | Rata-rata jarak hasil dari lokasi pengguna |
+| Jarak Terdekat/Terjauh | Rentang jarak hasil pencarian |
+| Hasil dalam 5 km | Jumlah hasil dalam radius 5 km |
+| Distance Precision | Persentase hasil dalam jarak relevan |
+
+**Bobot Kontribusi Komponen:**
+
+| Komponen | Bobot |
+|----------|-------|
+| BM25 (Text) | 40% |
+| Distance | 30% |
+| Rating | 20% |
+| Popularity | 10% |
+
 ---
 
 ### 3.6 Hasil Development
@@ -403,11 +435,13 @@ project/
 
 2. **Output**
    - Metrik evaluasi (Precision@K, Recall@K, AP)
+   - Evaluasi komponen BM25 dan Haversine secara terpisah
    - Peta interaktif dengan marker lokasi
    - Tabel hasil ranking dengan skor detail
 
 3. **Transparansi Evaluasi**
    - Menampilkan metrik IR kepada pengguna
+   - Analisis kontribusi masing-masing komponen ranking
    - Memberikan bukti objektif kualitas pencarian
 
 #### 3.6.4 Screenshot Aplikasi
@@ -420,11 +454,12 @@ project/
 
 Sistem ini berhasil mengimplementasikan **Information Retrieval** lengkap dengan:
 
-1. ✅ **Text Processing** - Preprocessing dan tokenisasi teks Bahasa Indonesia
-2. ✅ **BM25 Ranking** - Algoritma ranking berbasis TF-IDF
-3. ✅ **Geolocation** - Kalkulasi jarak menggunakan Haversine
-4. ✅ **Heuristic Ranking** - Kombinasi multi-faktor dengan bobot terukur
-5. ✅ **Evaluasi IR** - Metrik standar Precision, Recall, dan AP
+1. **Text Processing** - Preprocessing dan tokenisasi teks Bahasa Indonesia
+2. **BM25 Ranking** - Algoritma ranking berbasis TF-IDF
+3. **Geolocation** - Kalkulasi jarak menggunakan Haversine
+4. **Heuristic Ranking** - Kombinasi multi-faktor dengan bobot terukur
+5. **Evaluasi IR** - Metrik standar Precision, Recall, dan AP
+6. **Evaluasi Komponen** - Analisis performa BM25 dan Haversine secara terpisah
 
 Sistem dirancang untuk memberikan hasil pencarian yang **relevan**, **terukur**, dan **transparan** dengan menampilkan metrik evaluasi kepada pengguna.
 
