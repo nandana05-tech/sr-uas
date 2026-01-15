@@ -180,28 +180,51 @@ sequenceDiagram
     participant BM25 as BM25Engine
     participant Geo as GeoUtils
     participant Eval as Evaluator
+    participant CompEval as ComponentEvaluator
 
     User->>UI: Input Query + Lokasi + Filter
     UI->>Ranker: rank(query, lat, lon, filter)
     
+    Note over Ranker,BM25: Text Relevance Scoring
     Ranker->>BM25: get_all_scores(query_tokens)
     BM25-->>Ranker: bm25_scores[]
     
+    Note over Ranker,Geo: Distance Calculation
     Ranker->>Geo: haversine_distance(user, store)
     Geo-->>Ranker: distances[]
     
+    Note over Ranker: Multi-Factor Ranking
     Ranker->>Ranker: Calculate final_score
     Ranker->>Ranker: Sort & Filter
     Ranker-->>UI: results_df
     
+    Note over UI,Eval: Evaluasi Hasil
     UI->>Ranker: determine_relevance(results)
     Ranker-->>UI: relevance[]
     
     UI->>Eval: evaluate(relevance)
-    Eval-->>UI: metrics{}
+    Eval-->>UI: metrics{precision, recall, AP}
     
-    UI->>User: Display Metrics + Map + Table
+    Note over UI,CompEval: Evaluasi Komponen
+    UI->>CompEval: evaluate_components(results, bm25_engine)
+    CompEval->>BM25: get_query_match_stats()
+    BM25-->>CompEval: query_stats{}
+    CompEval->>BM25: get_all_scores() untuk corpus_match_rate
+    BM25-->>CompEval: all_scores[]
+    CompEval-->>UI: {bm25_metrics, distance_metrics}
+    
+    UI->>User: Display Metrics + Component Eval + Map + Table
 ```
+
+**Penjelasan Alur:**
+
+1. **Input**: User memasukkan query, lokasi (opsional), dan filter toko
+2. **BM25 Scoring**: Menghitung relevansi teks setiap dokumen terhadap query
+3. **Distance Calculation**: Menghitung jarak Haversine dari lokasi user ke setiap minimarket
+4. **Multi-Factor Ranking**: Menggabungkan semua skor dengan bobot terukur
+5. **Evaluasi Hasil**: Menghitung Precision@K, Recall@K, dan Average Precision
+6. **Evaluasi Komponen**: Menganalisis performa BM25 dan Haversine secara terpisah
+7. **Output**: Menampilkan hasil lengkap kepada user
 
 #### 3.3.2 Proses BM25 Scoring
 
@@ -261,6 +284,41 @@ flowchart TD
     I --> J[Return Top-K Results]
 ```
 
+#### 3.3.5 Proses Evaluasi Komponen
+
+**ComponentEvaluator** menganalisis performa BM25 dan Haversine secara terpisah:
+
+```python
+class ComponentEvaluator:
+    def evaluate_bm25(self, bm25_scores, query_match_stats):
+        scores = np.array(bm25_scores)
+        return {
+            'avg_score': np.mean(scores),
+            'max_score': np.max(scores),
+            'score_std': np.std(scores),
+            'corpus_match_rate': corpus_matches / total_corpus
+        }
+    
+    def evaluate_distance(self, distances):
+        return {
+            'avg_distance': np.mean(distances),
+            'within_5km': sum(1 for d in distances if d <= 5),
+            'distance_precision': within_threshold / total
+        }
+```
+
+**Metrik yang Dihitung:**
+
+| Komponen | Metrik | Deskripsi |
+|----------|--------|-----------|
+| **BM25** | Corpus Match Rate | Persentase dokumen corpus yang cocok |
+| | Avg/Max Score | Statistik skor BM25 |
+| | Score Range | Variasi kualitas hasil |
+| | Score Std Dev | Tingkat diskriminatif ranking |
+| **Haversine** | Avg Distance | Rata-rata jarak hasil |
+| | Within 5km | Jumlah hasil dalam 5 km |
+| | Distance Precision | Persentase hasil dalam jarak relevan |
+
 ---
 
 ### 3.4 Hasil Analisis Rekomendasi
@@ -269,13 +327,35 @@ flowchart TD
 
 **Query:** "Indomaret Cilandak"
 
-| Rank | Nama Tempat | Jarak | Rating | Final Score |
-|------|-------------|-------|--------|-------------|
-| 1 | Indomaret Cilandak Raya | 0.5 km | 4.3 | 0.87 |
-| 2 | Indomaret Taman Cilandak | 0.8 km | 5.0 | 0.82 |
-| 3 | Indomaret Cilandak Bar | 1.2 km | 4.4 | 0.76 |
+| Rank | Nama Tempat | BM25 Score | Jarak | Rating | Final Score |
+|------|-------------|------------|-------|--------|-------------|
+| 1 | Indomaret Cilandak Raya | 4.82 | 0.5 km | 4.3 | 0.87 |
+| 2 | Indomaret Taman Cilandak | 4.15 | 0.8 km | 5.0 | 0.82 |
+| 3 | Indomaret Cilandak Bar | 3.97 | 1.2 km | 4.4 | 0.76 |
 
-#### 3.4.2 Ground Truth (Relevance Labeling)
+#### 3.4.2 Contoh Evaluasi Komponen
+
+**Evaluasi BM25:**
+
+| Metrik | Nilai | Interpretasi |
+|--------|-------|--------------|
+| Corpus Match Rate | 120/675 (17.8%) | 120 dari 675 dokumen cocok dengan query |
+| Avg BM25 Score | 3.45 | Kecocokan cukup kuat |
+| Score Range | 2.85 | Ada variasi kualitas hasil |
+| Score Std Dev | 0.92 | Ranking cukup diskriminatif |
+| BM25 Precision@10 | 60% | 6 dari 10 hasil di atas median |
+
+**Evaluasi Haversine (jika lokasi aktif):**
+
+| Metrik | Nilai | Interpretasi |
+|--------|-------|--------------|
+| Rata-rata Jarak | 2.3 km | Hasil cukup dekat |
+| Jarak Terdekat | 0.5 km | Ada hasil sangat dekat |
+| Jarak Terjauh | 4.8 km | Masih dalam jangkauan |
+| Hasil dalam 5 km | 8/10 | 80% hasil dalam radius 5 km |
+| Distance Precision | 80% | 8 dari 10 dalam jarak relevan |
+
+#### 3.4.3 Ground Truth (Relevance Labeling)
 
 Sistem menggunakan **rule-based relevance labeling**:
 
@@ -291,9 +371,9 @@ flowchart TD
 ```
 
 **Aturan Relevansi:**
-1. ✅ Harus ada kecocokan teks (BM25 > 0)
-2. ✅ Jarak < 10km (jika lokasi tersedia)
-3. ✅ Tipe store sesuai query (jika disebutkan dalam query)
+1. Harus ada kecocokan teks (BM25 > 0)
+2. Jarak < 10km (jika lokasi tersedia)
+3. Tipe store sesuai query (jika disebutkan dalam query)
 
 ---
 
