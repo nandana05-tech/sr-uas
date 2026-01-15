@@ -266,21 +266,23 @@ def render_component_evaluation(bm25_metrics: Dict, distance_metrics: Dict,
             </div>
             """, unsafe_allow_html=True)
             
-            # Term Match Rate
-            term_match_rate = bm25_metrics.get('term_match_rate', 0)
+            # Corpus Match Rate (NEW - replaces always-100% metric)
+            corpus_match_count = bm25_metrics.get('corpus_match_count', 0)
+            total_corpus = bm25_metrics.get('total_corpus_size', 1)
+            corpus_match_rate = bm25_metrics.get('corpus_match_rate', 0)
             st.metric(
-                "Term Match Rate",
-                f"{term_match_rate:.0%}",
-                help="Persentase kata kunci query yang ditemukan di corpus"
+                "Corpus Match Rate",
+                f"{corpus_match_count}/{total_corpus} ({corpus_match_rate:.1%})",
+                help="Persentase dokumen di corpus yang cocok dengan query"
             )
             
-            # BM25 Score Stats
+            # BM25 Score Stats (Avg and Max)
             col1a, col1b = st.columns(2)
             with col1a:
                 st.metric(
                     "Avg BM25 Score",
                     f"{bm25_metrics.get('avg_score', 0):.2f}",
-                    help="Rata-rata skor BM25 hasil pencarian"
+                    help="Rata-rata skor BM25 hasil pencarian (semakin tinggi = kecocokan lebih kuat)"
                 )
             with col1b:
                 st.metric(
@@ -289,19 +291,29 @@ def render_component_evaluation(bm25_metrics: Dict, distance_metrics: Dict,
                     help="Skor BM25 tertinggi"
                 )
             
-            # Nonzero Results
-            nonzero_count = bm25_metrics.get('nonzero_count', 0)
-            nonzero_rate = bm25_metrics.get('nonzero_rate', 0)
-            st.metric(
-                "Hasil dengan Kecocokan Teks",
-                f"{nonzero_count} ({nonzero_rate:.0%})",
-                help="Jumlah hasil yang memiliki skor BM25 > 0"
-            )
+            # Score Range and Std (NEW)
+            col1c, col1d = st.columns(2)
+            with col1c:
+                min_score = bm25_metrics.get('min_score', 0)
+                max_score = bm25_metrics.get('max_score', 0)
+                score_range = max_score - min_score
+                st.metric(
+                    "Score Range",
+                    f"{score_range:.2f}",
+                    help="Rentang skor (Max - Min). Rentang lebar = ada variasi kualitas hasil"
+                )
+            with col1d:
+                score_std = bm25_metrics.get('score_std', 0)
+                st.metric(
+                    "Score Std Dev",
+                    f"{score_std:.2f}",
+                    help="Standar deviasi skor. Semakin tinggi = ranking lebih diskriminatif"
+                )
             
             # BM25 Precision
             bm25_precision = bm25_metrics.get('bm25_precision', 0)
             st.progress(bm25_precision)
-            st.caption(f"BM25 Precision@K: {bm25_precision:.1%}")
+            st.caption(f"BM25 Precision@K: {bm25_precision:.1%} (hasil di top-K yang di atas median)")
         
         # Distance Metrics
         with col2:

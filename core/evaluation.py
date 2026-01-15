@@ -352,7 +352,7 @@ class ComponentEvaluator:
         }
     
     def evaluate_components(self, result_df, query_tokens: List[str] = None,
-                           bm25_engine = None) -> Dict[str, dict]:
+                           bm25_engine = None, total_corpus_size: int = None) -> Dict[str, dict]:
         """
         Evaluasi lengkap kedua komponen.
         
@@ -360,6 +360,7 @@ class ComponentEvaluator:
             result_df: DataFrame hasil ranking
             query_tokens: List token query
             bm25_engine: Instance BM25Engine untuk mendapatkan statistik
+            total_corpus_size: Total ukuran corpus untuk menghitung corpus_match_rate
             
         Returns:
             Dictionary dengan evaluasi BM25 dan Distance
@@ -370,11 +371,31 @@ class ComponentEvaluator:
         
         # Get query match stats if bm25_engine provided
         query_match_stats = None
+        corpus_stats = None
         if bm25_engine and query_tokens:
             query_match_stats = bm25_engine.get_query_match_stats(query_tokens)
+            corpus_stats = bm25_engine.get_statistics()
         
         bm25_eval = self.evaluate_bm25(bm25_scores, relevance, query_match_stats)
         distance_eval = self.evaluate_distance(distances, relevance)
+        
+        # Calculate corpus match rate (documents with BM25 > 0 / total corpus)
+        if total_corpus_size and total_corpus_size > 0:
+            # Get all scores from bm25_engine to count total matches in corpus
+            if bm25_engine and query_tokens:
+                all_corpus_scores = bm25_engine.get_all_scores(query_tokens)
+                total_matches = sum(1 for s in all_corpus_scores if s > 0)
+                bm25_eval['corpus_match_count'] = total_matches
+                bm25_eval['corpus_match_rate'] = round(total_matches / total_corpus_size, 4)
+                bm25_eval['total_corpus_size'] = total_corpus_size
+            else:
+                bm25_eval['corpus_match_count'] = 0
+                bm25_eval['corpus_match_rate'] = 0.0
+                bm25_eval['total_corpus_size'] = total_corpus_size
+        
+        # Add corpus stats
+        if corpus_stats:
+            bm25_eval['vocabulary_size'] = corpus_stats.get('vocabulary_size', 0)
         
         return {
             'bm25': bm25_eval,

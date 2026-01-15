@@ -145,7 +145,8 @@ def main():
             component_metrics = component_evaluator.evaluate_components(
                 results, 
                 query_tokens=query_tokens,
-                bm25_engine=ranker.bm25
+                bm25_engine=ranker.bm25,
+                total_corpus_size=len(df)
             )
             render_component_evaluation(
                 bm25_metrics=component_metrics['bm25'],
